@@ -1,13 +1,17 @@
 package repository
 
 import (
+	"errors"
 	"fmt"
+
 	"github.com/blueship581/cybuildprice/backend/internal/model"
+	apperrors "github.com/blueship581/cybuildprice/backend/internal/errors"
 	"gorm.io/gorm"
 )
 
 type OfferRepository interface {
 	ListByProduct(uint) ([]model.Offer, error)
+	GetByID(uint) (model.Offer, error)
 	UpdateStatus(uint, string) (model.Offer, error)
 }
 type offerRepository struct{ db *gorm.DB }
@@ -19,6 +23,16 @@ func (r *offerRepository) ListByProduct(id uint) ([]model.Offer, error) {
 		return nil, fmt.Errorf("list offers: %w", err)
 	}
 	return data, nil
+}
+func (r *offerRepository) GetByID(id uint) (model.Offer, error) {
+	var item model.Offer
+	if err := r.db.Preload("Supplier").First(&item, id).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return item, apperrors.ErrNotFound
+		}
+		return item, fmt.Errorf("find offer: %w", err)
+	}
+	return item, nil
 }
 func (r *offerRepository) UpdateStatus(id uint, status string) (model.Offer, error) {
 	var item model.Offer

@@ -21,3 +21,26 @@ paths:
     post: {summary: 创建价格预警}
   /api/v1/budgets:
     post: {summary: 保存装修预算}
+  /api/v1/orders:
+    get:
+      summary: 采购单列表，可用 ?status=pending|in_transit|partial|completed|rejected|cancelled 过滤
+      responses: {'200': {description: 成功}}
+    post:
+      summary: 按报价下单，body：{"offer_id":1,"quantity":20}；数量不得低于起订量，商家、单价、运费与预计到货日随单锁定
+      responses: {'200': {description: 成功}, '400': {description: 数量低于起订量或参数非法}}
+  /api/v1/orders/{id}/accept:
+    post:
+      summary: 商家接单（仅待接单状态可接单），订单进入在途
+      responses: {'200': {description: 成功}, '400': {description: 状态不允许}}
+  /api/v1/orders/{id}/reject:
+    post:
+      summary: 商家说明无法供货，body：{"reason":"..."}，原因随单保留
+      responses: {'200': {description: 成功}, '400': {description: 状态不允许}}
+  /api/v1/orders/{id}/cancel:
+    post:
+      summary: 取消采购单，仅接单前（待接单）可取消
+      responses: {'200': {description: 成功}, '400': {description: 已接单不可取消}}
+  /api/v1/orders/{id}/deliveries:
+    post:
+      summary: 分次登记到货，body：{"quantity":5,"note":"..."}；累计到货不得超过下单量，全部到货后订单完成
+      responses: {'200': {description: 成功}, '400': {description: 累计到货超过下单量}}

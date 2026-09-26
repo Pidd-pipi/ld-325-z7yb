@@ -42,6 +42,7 @@ docker compose down
 - **价格趋势**：读取报价历史，展示 30/90 天或 1 年区间的最高、最低和平均价；前端以 ECharts 绘制 30 天图表。
 - **价格预警**：按目标价和降幅百分比创建订阅，演示环境使用 `demo-user` 身份写入站内预警记录。
 - **供应商管理**：供应商资质和审核状态可查询；管理员审核、供应商库存状态更新接口已保留。
+- **采购单闭环**：在报价旁确认下单，数量按起订量校验；下单即锁定商家、单价、运费和预计到货日。商家接单或说明无法供货（原因随单保留），接单后可分次登记到货，累计到货不超过下单量，全部到货才完成；采购记录按待接单、在途、部分到货、已完成筛选展示，逾期单标注延迟天数，取消仅允许在接单前。演示环境以 `demo-user` 身份代商家完成接单/无法供货操作。
 - **装修预算**：按客厅、厨房、卫生间和面积基于市场均价试算，结果可保存，前端提供导出入口。
 
 ## 本地开发（备选）
@@ -104,6 +105,12 @@ npm run dev -- -p 18625
 | GET/POST | `/api/v1/favorites` | 收藏列表 / 添加收藏 |
 | POST | `/api/v1/alerts` | 创建价格预警 |
 | POST | `/api/v1/budgets` | 保存预算试算 |
+| GET | `/api/v1/orders?status=` | 采购单列表，状态过滤：`pending`、`in_transit`、`partial`、`completed`、`rejected`、`cancelled` |
+| POST | `/api/v1/orders` | 按报价下单，body：`{"offer_id":1,"quantity":20}`；数量不得低于起订量，商家、单价、运费、预计到货日随单锁定 |
+| POST | `/api/v1/orders/:id/accept` | 商家接单（仅待接单可接单），订单进入在途 |
+| POST | `/api/v1/orders/:id/reject` | 商家说明无法供货，body：`{"reason":"..."}`，原因随单保留 |
+| POST | `/api/v1/orders/:id/cancel` | 取消采购单，仅接单前可取消 |
+| POST | `/api/v1/orders/:id/deliveries` | 分次登记到货，body：`{"quantity":5,"note":"..."}`；累计到货不得超过下单量，全部到货后订单完成 |
 | GET | `/api/v1/suppliers` | 查询供应商 |
 | PATCH | `/api/v1/admin/suppliers/:id/status` | 审核供应商（admin 角色） |
 | PATCH | `/api/v1/supplier/offers/:id/status` | 更新报价库存状态（supplier/admin 角色） |

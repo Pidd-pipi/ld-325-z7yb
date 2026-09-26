@@ -19,6 +19,7 @@ func New(db *gorm.DB, logger *slog.Logger, jwtSecret string) *gin.Engine {
 	trend := handler.NewTrendHandler(service.NewPriceHistoryService(repository.NewPriceHistoryRepository(db)))
 	user := handler.NewUserDataHandler(service.NewUserDataService(repository.NewUserDataRepository(db)), v)
 	supplier := handler.NewSupplierHandler(service.NewSupplierService(repository.NewSupplierRepository(db)), v)
+	order := handler.NewPurchaseOrderHandler(service.NewPurchaseOrderService(repository.NewPurchaseOrderRepository(db), repository.NewOfferRepository(db)), v)
 	r := gin.New()
 	r.Use(gin.Recovery(), middleware.RequestID(), middleware.RequestLogger(logger), middleware.ErrorHandler(), middleware.JWTOrDemoAuth(jwtSecret))
 	r.GET(constants.HealthPath, func(c *gin.Context) { c.JSON(200, gin.H{"status": "ok"}) })
@@ -35,5 +36,11 @@ func New(db *gorm.DB, logger *slog.Logger, jwtSecret string) *gin.Engine {
 	api.POST("/favorites", user.CreateFavorite)
 	api.POST("/alerts", user.CreateAlert)
 	api.POST("/budgets", user.CreateBudget)
+	api.POST("/orders", order.Create)
+	api.GET("/orders", order.List)
+	api.POST("/orders/:id/accept", order.Accept)
+	api.POST("/orders/:id/reject", order.Reject)
+	api.POST("/orders/:id/cancel", order.Cancel)
+	api.POST("/orders/:id/deliveries", order.Receive)
 	return r
 }

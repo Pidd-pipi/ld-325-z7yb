@@ -45,5 +45,38 @@ func Seed(db *gorm.DB) error {
 			}
 		}
 	}
+	if err := seedPurchaseOrders(db, offers); err != nil {
+		return err
+	}
+	return nil
+}
+
+// seedPurchaseOrders gives the demo identity one order per lifecycle state,
+// including an overdue in-transit order so the delay badge is visible.
+func seedPurchaseOrders(db *gorm.DB, offers []Offer) error {
+	now := time.Now()
+	ago := func(days int) time.Time { return now.AddDate(0, 0, -days) }
+	respondedInTransit := ago(7)
+	respondedPartial := ago(1)
+	respondedRejected := ago(1)
+	completedAt := ago(6)
+	orders := []PurchaseOrder{
+		{OrderNo: "PO" + ago(1).Format("20060102") + "-DEM01", UserID: constants.DemoUserID, OfferID: offers[0].ID, ProductID: offers[0].ProductID, SupplierID: offers[0].SupplierID, Quantity: 20, UnitPrice: offers[0].UnitPrice, Freight: offers[0].Freight, ExpectedArrival: now.AddDate(0, 0, 2), Status: constants.OrderStatusPending, Model: gorm.Model{CreatedAt: ago(1), UpdatedAt: ago(1)}},
+		{OrderNo: "PO" + ago(8).Format("20060102") + "-DEM02", UserID: constants.DemoUserID, OfferID: offers[2].ID, ProductID: offers[2].ProductID, SupplierID: offers[2].SupplierID, Quantity: 40, UnitPrice: offers[2].UnitPrice, Freight: offers[2].Freight, ExpectedArrival: ago(3), Status: constants.OrderStatusInTransit, RespondedAt: &respondedInTransit, Model: gorm.Model{CreatedAt: ago(8), UpdatedAt: ago(7)}},
+		{OrderNo: "PO" + ago(1).Format("20060102") + "-DEM03", UserID: constants.DemoUserID, OfferID: offers[4].ID, ProductID: offers[4].ProductID, SupplierID: offers[4].SupplierID, Quantity: 6, UnitPrice: offers[4].UnitPrice, Freight: offers[4].Freight, ExpectedArrival: now.AddDate(0, 0, 1), Status: constants.OrderStatusPartial, ReceivedTotal: 2, RespondedAt: &respondedPartial, Model: gorm.Model{CreatedAt: ago(1), UpdatedAt: ago(1)}},
+		{OrderNo: "PO" + ago(10).Format("20060102") + "-DEM04", UserID: constants.DemoUserID, OfferID: offers[6].ID, ProductID: offers[6].ProductID, SupplierID: offers[6].SupplierID, Quantity: 10, UnitPrice: offers[6].UnitPrice, Freight: offers[6].Freight, ExpectedArrival: ago(8), Status: constants.OrderStatusCompleted, ReceivedTotal: 10, RespondedAt: &respondedInTransit, CompletedAt: &completedAt, Model: gorm.Model{CreatedAt: ago(10), UpdatedAt: ago(6)}},
+		{OrderNo: "PO" + ago(2).Format("20060102") + "-DEM05", UserID: constants.DemoUserID, OfferID: offers[3].ID, ProductID: offers[3].ProductID, SupplierID: offers[3].SupplierID, Quantity: 10, UnitPrice: offers[3].UnitPrice, Freight: offers[3].Freight, ExpectedArrival: now.AddDate(0, 0, 2), Status: constants.OrderStatusRejected, RejectReason: "厂家排产已满，本月无法供货", RespondedAt: &respondedRejected, Model: gorm.Model{CreatedAt: ago(2), UpdatedAt: ago(1)}},
+	}
+	if err := db.Create(&orders).Error; err != nil {
+		return fmt.Errorf("seed purchase orders: %w", err)
+	}
+	deliveries := []Delivery{
+		{PurchaseOrderID: orders[2].ID, Quantity: 2, Note: "首批到货，外包装完好", Model: gorm.Model{CreatedAt: ago(1), UpdatedAt: ago(1)}},
+		{PurchaseOrderID: orders[3].ID, Quantity: 6, Note: "工地自提", Model: gorm.Model{CreatedAt: ago(8), UpdatedAt: ago(8)}},
+		{PurchaseOrderID: orders[3].ID, Quantity: 4, Note: "尾批送达到楼下", Model: gorm.Model{CreatedAt: ago(6), UpdatedAt: ago(6)}},
+	}
+	if err := db.Create(&deliveries).Error; err != nil {
+		return fmt.Errorf("seed deliveries: %w", err)
+	}
 	return nil
 }

@@ -4,3 +4,6 @@ export type Product = { ID: number; Name: string; Brand: string; Model: string; 
 export type ApiEnvelope<T> = { code: number; message: string; data: T };
 export type TrendPoint = { Price: number; RecordedAt: string };
 export type Trend = { range: string; highest: number; lowest: number; average: number; points: TrendPoint[] };
+export type OrderStatus = 'pending' | 'in_transit' | 'partial' | 'completed' | 'cancelled' | 'rejected';
+export type Arrival = { ID: number; Quantity: number; Note: string; ArrivedAt: string };
+export type PurchaseOrder = { ID: number; Status: OrderStatus; ProductName: string; ProductUnit: string; SupplierName: string; UnitPrice: number; Freight: string; Quantity: number; ReceivedQuantity: number; ExpectedArrival: string; RejectReason?: string; DelayDays: number; Arrivals: Arrival[]; CreatedAt: string };

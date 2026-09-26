@@ -1,0 +1,5 @@
+-- GORM AutoMigrate creates the purchase order tables at startup. This file documents the managed migration boundary.
+-- Tables: purchase_orders, arrivals.
+-- purchase_orders 在下单时锁定商家、单价、运费与预计到货日，状态流转：pending → in_transit → partial → completed，
+-- 另有 cancelled（仅接单前）与 rejected（商家说明无法供货并保留原因）。
+-- arrivals 记录接单后的分次到货，事务内保证累计到货不超过下单量，全部到货才置为 completed。

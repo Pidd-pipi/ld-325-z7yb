@@ -38,6 +38,7 @@ docker compose down
 
 - **分类与检索**：覆盖瓷砖、地板、涂料、卫浴、五金、门窗、灯具、管材；支持关键词、分类和排序接口。
 - **多商家报价**：同款材料显示店铺、单价、起订量、运费、交货期及库存状态，最低价高亮。
+- **采购单流转**：报价旁一键下单，按起订量校验数量并锁定商家、单价、运费与预计到货日；商家接单或填写无法供货原因（原因保留在记录中）；接单后分次登记到货，累计到货不能超过下单量，全部到货才完成；采购记录按待接单、在途、部分到货、已完成分组展示，逾期自动标注延迟天数；取消仅允许在接单前。
 - **收藏与对比**：收藏进入“本周采购”文件夹；可同时把 2–4 款材料纳入对比清单。
 - **价格趋势**：读取报价历史，展示 30/90 天或 1 年区间的最高、最低和平均价；前端以 ECharts 绘制 30 天图表。
 - **价格预警**：按目标价和降幅百分比创建订阅，演示环境使用 `demo-user` 身份写入站内预警记录。
@@ -104,6 +105,12 @@ npm run dev -- -p 18625
 | GET/POST | `/api/v1/favorites` | 收藏列表 / 添加收藏 |
 | POST | `/api/v1/alerts` | 创建价格预警 |
 | POST | `/api/v1/budgets` | 保存预算试算 |
+| GET/POST | `/api/v1/purchase-orders` | 采购单列表 / 按报价下单（校验起订量并锁定条款） |
+| POST | `/api/v1/purchase-orders/:id/cancel` | 取消采购单（仅接单前） |
+| POST | `/api/v1/purchase-orders/:id/arrivals` | 分次登记到货（累计不超下单量，全部到货完成） |
+| POST | `/api/v1/purchase-orders/:id/accept` | 商家接单（supplier/admin 角色） |
+| POST | `/api/v1/purchase-orders/:id/reject` | 商家说明无法供货并保留原因（supplier/admin 角色） |
+| POST | `/api/v1/auth/demo-token` | 演示环境角色令牌（体验商家侧操作） |
 | GET | `/api/v1/suppliers` | 查询供应商 |
 | PATCH | `/api/v1/admin/suppliers/:id/status` | 审核供应商（admin 角色） |
 | PATCH | `/api/v1/supplier/offers/:id/status` | 更新报价库存状态（supplier/admin 角色） |

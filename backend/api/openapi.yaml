@@ -21,3 +21,23 @@ paths:
     post: {summary: 创建价格预警}
   /api/v1/budgets:
     post: {summary: 保存装修预算}
+  /api/v1/purchase-orders:
+    get:
+      summary: 当前用户采购单列表（含到货记录与延迟天数）
+    post:
+      summary: 按报价创建采购单，校验起订量并锁定商家、单价、运费与预计到货日
+  /api/v1/purchase-orders/{id}/accept:
+    post:
+      summary: 商家接单，采购单进入在途（supplier/admin 角色）
+  /api/v1/purchase-orders/{id}/reject:
+    post:
+      summary: 商家说明无法供货并保留原因（supplier/admin 角色）
+  /api/v1/purchase-orders/{id}/cancel:
+    post:
+      summary: 取消采购单，仅允许在商家接单前操作
+  /api/v1/purchase-orders/{id}/arrivals:
+    post:
+      summary: 分次登记到货，累计到货不能超过下单量，全部到货后完成
+  /api/v1/auth/demo-token:
+    post:
+      summary: 演示环境角色令牌，用于体验商家侧接单/无法供货操作

@@ -34,6 +34,9 @@ func Seed(db *gorm.DB) error {
 	if err := db.Create(&offers).Error; err != nil {
 		return fmt.Errorf("seed offers: %w", err)
 	}
+	if err := seedPurchaseOrders(db, products, suppliers, offers); err != nil {
+		return err
+	}
 	now := time.Now().AddDate(0, 0, -(constants.HistorySeedDays - 1))
 	for _, product := range products {
 		base := float64(100 + product.ID*45)
@@ -44,6 +47,29 @@ func Seed(db *gorm.DB) error {
 				return fmt.Errorf("seed price history: %w", err)
 			}
 		}
+	}
+	return nil
+}
+
+// seedPurchaseOrders 为 demo-user 写入覆盖待接单、在途（逾期）、部分到货和已完成四种状态的采购单。
+func seedPurchaseOrders(db *gorm.DB, products []Product, suppliers []Supplier, offers []Offer) error {
+	today := time.Now()
+	orders := []PurchaseOrder{
+		{UserID: constants.DemoUserID, OfferID: offers[0].ID, ProductID: products[0].ID, SupplierID: suppliers[0].ID, SupplierName: suppliers[0].Name, UnitPrice: offers[0].UnitPrice, Freight: offers[0].Freight, Quantity: 30, Status: constants.OrderStatusPending, ExpectedArrival: today.AddDate(0, 0, offers[0].DeliveryDays)},
+		{Model: gorm.Model{CreatedAt: today.AddDate(0, 0, -5)}, UserID: constants.DemoUserID, OfferID: offers[2].ID, ProductID: products[1].ID, SupplierID: suppliers[1].ID, SupplierName: suppliers[1].Name, UnitPrice: offers[2].UnitPrice, Freight: offers[2].Freight, Quantity: 100, Status: constants.OrderStatusInTransit, ExpectedArrival: today.AddDate(0, 0, -2)},
+		{Model: gorm.Model{CreatedAt: today.AddDate(0, 0, -4)}, UserID: constants.DemoUserID, OfferID: offers[4].ID, ProductID: products[2].ID, SupplierID: suppliers[0].ID, SupplierName: suppliers[0].Name, UnitPrice: offers[4].UnitPrice, Freight: offers[4].Freight, Quantity: 20, ReceivedQuantity: 8, Status: constants.OrderStatusPartial, ExpectedArrival: today.AddDate(0, 0, 2)},
+		{Model: gorm.Model{CreatedAt: today.AddDate(0, 0, -6)}, UserID: constants.DemoUserID, OfferID: offers[6].ID, ProductID: products[4].ID, SupplierID: suppliers[0].ID, SupplierName: suppliers[0].Name, UnitPrice: offers[6].UnitPrice, Freight: offers[6].Freight, Quantity: 50, ReceivedQuantity: 50, Status: constants.OrderStatusCompleted, ExpectedArrival: today.AddDate(0, 0, -1)},
+	}
+	if err := db.Create(&orders).Error; err != nil {
+		return fmt.Errorf("seed purchase orders: %w", err)
+	}
+	arrivals := []Arrival{
+		{PurchaseOrderID: orders[2].ID, Quantity: 8, Note: "第一批，验收合格", ArrivedAt: today.AddDate(0, 0, -1)},
+		{PurchaseOrderID: orders[3].ID, Quantity: 30, Note: "首批到货", ArrivedAt: today.AddDate(0, 0, -3)},
+		{PurchaseOrderID: orders[3].ID, Quantity: 20, Note: "尾批到货，数量齐", ArrivedAt: today.AddDate(0, 0, -2)},
+	}
+	if err := db.Create(&arrivals).Error; err != nil {
+		return fmt.Errorf("seed arrivals: %w", err)
 	}
 	return nil
 }

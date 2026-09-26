@@ -21,6 +21,15 @@ func ErrorHandler() gin.HandlerFunc {
 		}
 		last := c.Errors.Last()
 		err := last.Err
+		var business *apperrors.BusinessError
+		if errors.As(err, &business) {
+			status := http.StatusBadRequest
+			if errors.Is(err, apperrors.ErrForbidden) {
+				status = http.StatusForbidden
+			}
+			c.JSON(status, dto.Response{Code: business.Code, Message: business.Message})
+			return
+		}
 		code, status, message := constants.ErrorInternal, http.StatusInternalServerError, "internal server error"
 		if errors.Is(err, apperrors.ErrUnauthorized) {
 			code, status, message = constants.ErrorUnauthorized, http.StatusUnauthorized, "unauthorized"

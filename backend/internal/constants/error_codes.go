@@ -5,4 +5,6 @@ const (
 	ErrorNotFound     = 1002
 	ErrorInternal     = 1003
 	ErrorUnauthorized = 1004
+	ErrorBusiness     = 1005
+	ErrorForbidden    = 1006
 )
